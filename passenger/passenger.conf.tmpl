@@ -1,0 +1,30 @@
+{% if pillar['apache-config']['passenger_version']  < '4' %}
+LoadModule passenger_module {{ salt['cmd.run']('PATH=/usr/local/bin:$PATH passenger-config --root') }}/ext/apache2/mod_passenger.so
+{% elif pillar['apache-config']['passenger_version'] >= '4' %}
+LoadModule passenger_module {{ salt['cmd.run']('PATH=/usr/local/bin:$PATH passenger-config --root') }}/libout/apache2/mod_passenger.so
+{% endif %}
+PassengerRoot {{ salt['cmd.run']('PATH=/usr/local/bin:$PATH passenger-config --root') }}
+PassengerMaxRequests {{ salt['pillar.get']('apache-config:passenger_max_requests', '1000') }}
+{% if pillar['apache-config']['passenger_version']  < '4' %}
+PassengerUseGlobalQueue on
+{% endif %}
+PassengerMaxPoolSize {{ salt['pillar.get']('apache-config:passenger_max_pool_size', '4') }}
+PassengerMinInstances {{ salt['pillar.get']('apache-config:passenger_min_instances', '1') }}
+PassengerHighPerformance on
+{% if pillar['apache-config']['passenger_version'] >= '4' %}
+{% if pillar['ruby']['ruby_version'] == 'ruby-1.8' %}
+PassengerDefaultRuby /usr/local/bin/ruby
+{% else %}
+PassengerDefaultRuby /usr/bin/ruby
+{% endif %}
+{% endif %}
+{% if pillar['apache-config']['passenger_version'] < '4'  %}
+  {% if pillar['centro']['application_name'] == 'insight' %}
+PassengerRuby /etc/centro/insight/ruby
+  {% else %}
+PassengerRuby /usr/bin/ruby
+  {% endif %}
+{% endif %}
+{% if pillar['rails']['rails_environment'] == 'production' %}
+PassengerFriendlyErrorPages off
+{% endif %}
